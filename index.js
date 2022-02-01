@@ -4,21 +4,20 @@ const register = prom.register;
 
 var app = express();
 
-const counter = new prom.Counter({
+const contadorRequisicoes = new prom.Counter({
   name: 'aula_request_total',
   help: 'contador de requests',
   labelNames: ['statusCode']
 });
 
-const gauge = new prom.Gauge({ 
-    name: 'aula_free_bytes', 
-    help: 'exemplo de gauge' 
+const usuariosOnline = new prom.Gauge({ 
+    name: 'aula_usuarios_logados_total', 
+    help: 'Números de usuários logados no momento' 
 });
 
-const histogram = new prom.Histogram({
-    name: 'aula_request_time_seconds',
+const tempoDeResposta = new prom.Histogram({
+    name: 'aula_request_duration_seconds',
     help: 'Tempo de resposta da API',
-    buckets: [0.1, 0.2, 0.3, 0.4, 0.5],
   });
 
   const summary = new prom.Summary({
@@ -27,15 +26,36 @@ const histogram = new prom.Histogram({
     percentiles: [0.5, 0.9, 0.99],
   });
 
+function randn_bm(min, max, skew) {
+    var u = 0, v = 0;
+    while (u === 0) u = Math.random();//converting (0,1) to (0,1)
+    while (v === 0) v = Math.random();
+    let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    
+    num = num / 10.0 + 0.5; //translate to 0 -> 1
+    if (num > 1 || num < 0) num = randn_bm(min, max, skew); //resample between
+    num = Math.pow(num, skew); //skew
+    num *= max  - min; //stretch to fill range
+    num += min; //offset to min
+    return num;
+}
+
+setInterval(() => {
+  // Incrementar contador
+  var taxaDeErro = 5;
+  var statusCode = (Math.random() < taxaDeErro/100) ? '500' : '200';
+  contadorRequisicoes.labels(statusCode).inc(); 
+
+  // Atualiza gauge
+  usuariosOnline.set(500 + Math.round((50 * Math.random())));
+  
+  // Observa tempo de resposta
+  var tempoObservado = randn_bm(0, 3, 4);
+  tempoDeResposta.observe(tempoObservado);
+
+}, 1000);
+
 app.get('/', function(req, res) {
-    counter.labels('300').inc();
-    counter.labels('200').inc();
-    gauge.set(100*Math.random());
-    const tempo = Math.random();
-    histogram.observe(tempo);
-    summary.observe(tempo);
-
-
     res.send('Hellow World!');
 });
 
