@@ -8,12 +8,12 @@ scrape_configs:
   scheme: http
   static_configs:
   - targets:
-    - 192.168.15.89:9090  
+    - localhost:9090  
 - job_name: aula
   static_configs:
   - targets:
-    - 192.168.15.89:5000
-- job_name: servidor_pessoal
+    - localhost:5000
+- job_name: name-server
   static_configs:
   - targets:
-    - 192.168.15.89:9100
+    - localhost:9100
